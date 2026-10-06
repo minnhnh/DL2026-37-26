@@ -132,7 +132,7 @@ Khi đánh giá sau stage `k`, mô hình chọn trong mọi class đã thấy t�
 - Đã kiểm tra: không thiếu file, không trùng hash, không rò rỉ ảnh gốc giữa các tập, và đã rà
   soát thủ công bằng contact sheet.
 
-Chi tiết trong `DATASET_CARD.md`. Đây là bộ dữ liệu riêng của đồ án, **không** phải đánh giá
+Chi tiết trong `DATA.md`. Đây là bộ dữ liệu riêng của đồ án, **không** phải đánh giá
 trên split test chính thức của Open Images.
 
 ### 3.3. Mô hình

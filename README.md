@@ -58,6 +58,9 @@ available and only 2.93 accuracy points are at stake: it needs no training step,
 peaks at 104 MiB against the hybrid's 645 MiB, and stores one vector per class
 instead of 200 images.
 
+Dataset source, version, split, preprocessing, and the processed-data download
+are documented in [`DATA.md`](DATA.md).
+
 Measured values per arm are in [`RESULTS.md`](RESULTS.md); the threats to this
 comparison are in
 [`docs/report/LIMITATIONS_AND_THREATS.md`](docs/report/LIMITATIONS_AND_THREATS.md).
@@ -105,6 +108,10 @@ pip install -r requirements-data.txt
 ```
 
 ## 1. Download Open Images V7
+
+To reuse the exact images behind the reported results, download the processed
+archive listed in [`DATA.md`](DATA.md), extract it at the repository root, and
+skip to step 4. Steps 1-3 rebuild the subset from the official source.
 
 Open Images is downloaded only through its official FiftyOne integration. The
 raw download is intentionally larger than the final subset because crop filters
@@ -355,7 +362,23 @@ per class.
 Results for both arms are in `RESULTS.md`, and the two-backbone figure is
 `outputs/hybrid_figures/hybrid_backbone_comparison.png`.
 
-## 7. Tests
+## 7. Inference demo
+
+Classify new images with any saved stage checkpoint. The script rebuilds the
+strategy from the checkpoint, so it uses the same prediction rule as the
+evaluation (softmax head for gradient-based methods, nearest prototype for NCM
+and the hybrid) and only considers the classes seen up to that stage.
+
+```powershell
+python scripts/predict.py --checkpoint outputs/ncm/seed_42/checkpoints/stage_3.pt path/to/image.jpg
+python scripts/predict.py --checkpoint outputs/replay/seed_42/checkpoints/stage_3.pt path/to/folder
+```
+
+Each line of output is `<image path>\t<predicted class>`. Inputs may be image
+files or folders (searched recursively). No pretrained weights are downloaded;
+all weights come from the checkpoint.
+
+## 8. Tests
 
 The tests use generated 32×32 images and the local `tiny_cnn` smoke-test
 backbone; they do not download pretrained weights or datasets.

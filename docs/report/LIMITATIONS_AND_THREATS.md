@@ -231,7 +231,7 @@ pretrained lớn đã được huấn luyện trước đó bằng chi phí rấ
 ## 5. Dữ liệu, đạo đức và giấy phép
 
 - **Nhiễu nhãn và crop:** một số crop Person chỉ có nửa thân; một số crop Building là lối vào
-  hoặc bên trong tòa nhà (`DATASET_CARD.md`).
+  hoặc bên trong tòa nhà (`DATA.md`).
 - **Tỉ lệ và ngữ cảnh khác nhau giữa class:** kích thước box và ngữ cảnh khác nhau theo loại
   object; mô hình có thể học tín hiệu phụ (ví dụ tỉ lệ khung, nền) thay vì hình dạng object.
 - **Nguồn dữ liệu gộp:** ảnh lấy từ split validation và test chính thức của Open Images rồi chia
