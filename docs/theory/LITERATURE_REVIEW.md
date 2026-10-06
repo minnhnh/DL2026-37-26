@@ -15,6 +15,12 @@ khái niệm với cách cài đặt thực tế trong repository. Mọi trích 
   al., 2017) đã đối chiếu nguyên văn. Công thức BWT của Lopez-Paz & Ranzato (2017) đã được
   đối chiếu với Phương trình (3) trong bản proceedings chính thức của NeurIPS.
 - Nhận định về nội dung bài báo được viết ở dạng diễn giải (paraphrase), không trích dài.
+- Ngày 2026-10-06, nội dung các câu có trích dẫn được kiểm tra chéo với toàn văn của 20 bài
+  có bản arXiv (qua NotebookLM) và đọc lại thủ công. Đã sửa hai chỗ gán ý quá mức: Rolnick et
+  al. (2019) là nghiên cứu học tăng cường, không phải phân loại ảnh; Robins (1995) phân tích
+  rehearsal chứ không phải nơi khởi xướng ý tưởng này. Các tài liệu [1]–[5], [7], [14], [20]
+  chưa được kiểm tra toàn văn (không có bản mở, không nạp được, hoặc không nằm trong bộ 20
+  bài); metadata của chúng vẫn khớp Crossref hoặc arXiv.
 
 ---
 
@@ -132,10 +138,12 @@ logit class mới vượt lên trên tất cả logit cũ. Đây đúng là hi�
 
 ## 5. Replay / rehearsal
 
-Ý tưởng lưu lại và luyện lại dữ liệu cũ đã có từ Robins (1995) [14], người phân tích
-rehearsal và pseudorehearsal như cách giảm catastrophic forgetting. Trong học sâu, Rolnick et
-al. (2019) [15] cho thấy experience replay đơn giản là một baseline mạnh, và Chaudhry et al.
-(2019) [16] cho thấy ngay cả bộ nhớ episodic rất nhỏ cũng giúp đáng kể. iCaRL (Rebuffi et
+Robins (1995) [14] phân tích rehearsal (luyện lại một phần dữ liệu cũ khi học dữ liệu mới)
+như một cách giảm catastrophic forgetting, và đề xuất pseudorehearsal để có lợi ích tương tự
+mà không cần truy cập dữ liệu cũ. Trong học tăng cường, Rolnick et al. (2019) [15] cho thấy
+replay (phương pháp CLEAR, kết hợp replay với behavioral cloning) là một cách chống quên đơn
+giản mà hiệu quả. Trong phân loại có giám sát, Chaudhry et al. (2019) [16] cho thấy experience
+replay với bộ nhớ episodic rất nhỏ đã vượt nhiều phương pháp phức tạp hơn. iCaRL (Rebuffi et
 al., 2017) [17] kết hợp exemplar rehearsal với distillation và chọn exemplar bằng
 **herding**, để trung bình đặc trưng của tập exemplar xấp xỉ tốt trung bình của class.
 
@@ -239,12 +247,12 @@ bounding box và quan hệ thị giác. Đồ án dùng Open Images V7 qua tích
 | 11 | Kunstner et al. 2019 | Giới hạn của empirical Fisher | Thảo luận EWC | arXiv + NeurIPS |
 | 12 | Li & Hoiem 2018 | LwF | Phương pháp | Crossref + arXiv |
 | 13 | Hinton et al. 2015 | Knowledge distillation, nhiệt độ | Phương pháp | arXiv API |
-| 14 | Robins 1995 | Rehearsal / pseudorehearsal | Phương pháp | Crossref |
-| 15 | Rolnick et al. 2019 | Experience replay | Phương pháp | arXiv API (journal ref NeurIPS 2019) |
+| 14 | Robins 1995 | Phân tích rehearsal, đề xuất pseudorehearsal | Phương pháp | Crossref + tóm tắt bài |
+| 15 | Rolnick et al. 2019 | Replay trong học tăng cường (CLEAR) | Phương pháp | arXiv API + NeurIPS proceedings + toàn văn (NotebookLM) |
 | 16 | Chaudhry et al. 2019 | Bộ nhớ episodic nhỏ | Thảo luận Replay | arXiv API |
 | 17 | Rebuffi et al. 2017 | iCaRL, NME, herding, avg. incremental acc. | Phương pháp, metric | CVF + nguyên văn PDF |
 | 18 | Wu et al. 2019 | Bias về class mới | Thảo luận | CVF |
-| 19 | Zhao et al. 2020 | Distillation không chống được bias class mới | Thảo luận LwF | arXiv API (trang CVPR chưa xác minh) |
+| 19 | Zhao et al. 2020 | Distillation không chống được bias class mới | Thảo luận LwF | Crossref (CVPR 2020, tr. 13205–13214) + arXiv |
 | 20 | Mensink et al. 2013 | NCM | Phương pháp | Crossref |
 | 21 | Janson et al. 2022 | Frozen pretrained + NCM là baseline mạnh | Thảo luận NCM | arXiv API |
 | 22 | Zhou et al. 2025 | Prototype trên PTM đóng băng, APER | Thảo luận NCM | Springer (qua tìm kiếm) + arXiv |
@@ -292,7 +300,7 @@ doi:10.1038/s42256-022-00568-3
 [9] J. Kirkpatrick et al., "Overcoming catastrophic forgetting in neural networks," *PNAS*,
 vol. 114, no. 13, pp. 3521–3526, 2017. doi:10.1073/pnas.1611835114
 
-[10] J. Schwarz, J. Luketina, W. M. Czarnecki, A. Grabska-Barwinska, Y. W. Teh, R. Pascanu,
+[10] J. Schwarz, W. M. Czarnecki, J. Luketina, A. Grabska-Barwinska, Y. W. Teh, R. Pascanu,
 and R. Hadsell, "Progress & Compress: A scalable framework for continual learning," in
 *Proc. ICML*, PMLR 80, pp. 4528–4537, 2018.
 
@@ -322,7 +330,8 @@ classifier and representation learning," in *Proc. CVPR*, pp. 2001–2010, 2017.
 learning," in *Proc. CVPR*, pp. 374–382, 2019.
 
 [19] B. Zhao, X. Xiao, G. Gan, B. Zhang, and S.-T. Xia, "Maintaining discrimination and
-fairness in class incremental learning," in *Proc. CVPR*, 2020. arXiv:1911.07053
+fairness in class incremental learning," in *Proc. CVPR*, pp. 13205–13214, 2020.
+doi:10.1109/CVPR42600.2020.01322
 
 [20] T. Mensink, J. Verbeek, F. Perronnin, and G. Csurka, "Distance-based image
 classification: Generalizing to new classes at near-zero cost," *IEEE TPAMI*, vol. 35,
