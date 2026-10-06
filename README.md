@@ -1,8 +1,8 @@
 # Continual Image Classification without Catastrophic Forgetting
 
 Reproducible class-incremental comparison of Naive Fine-tuning, EWC, LwF,
-Replay, Frozen ViT-Tiny + NCM, and cumulative Joint fine-tuning as an
-approximate offline upper bound.
+Replay, Frozen ViT-Tiny + NCM, a Replay + NCM hybrid, and cumulative Joint
+fine-tuning as an approximate offline upper bound.
 
 ## Method selection
 
