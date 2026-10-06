@@ -19,28 +19,34 @@ only, and the last row is an untrained ViT.
 | Naive | ImageNet-21k | 20.00 ± 0.00 | 96.67 ± 1.04 | 501 | 646 |
 | EWC | ImageNet-21k | 20.00 ± 0.00 | 96.83 ± 0.76 | 552 | 1039 |
 | LwF | ImageNet-21k | 20.00 ± 0.00 | 97.67 ± 0.76 | 491 | 683 |
-| Replay+NCM hybrid | pre-trained on stage 0 only | 53.47 ± 4.28 | 14.00 ± 2.65 | 725 | 645 |
+| Replay+NCM hybrid | pre-trained on stage 0 only | 53.47 ± 4.28 | 14.00 ± 2.65 | 910 | 645 |
 | Replay | pre-trained on stage 0 only | 45.60 ± 4.33 | 39.00 ± 5.89 | 766 | 645 |
 | NCM | pre-trained on stage 0 only | 25.47 ± 1.40 | 21.83 ± 4.80 | 237 | 645 |
 | NCM | untrained | 23.47 ± 1.01 | 22.67 ± 2.02 | 51 | 103 |
 
 The Stage 0 rows include the 185 s / 645 MiB pre-training step that produces
-their backbone; that checkpoint is produced once and shared across them.
+their backbone; that checkpoint is produced once and shared across them. The
+hybrid and backbone-initialization rows were run in a different GPU session from
+the 18 published runs, so their times are not directly comparable with the six
+published methods.
 
-Replay+NCM hybrid trains the backbone with Replay and classifies with NCM
-prototypes. It is the most effective method measured on both backbones. On
-ImageNet it reaches 95.60%, above the Joint reference at 95.20%; the 0.40-point
-difference is inside both standard deviations, so the two are not separable, but
-the hybrid does it in 638 s against 1247 s and remains a valid continual method.
-It is separable from its parents — 2.93 points over NCM and 4.40 over Replay,
-with no overlap between per-seed ranges — and its spread across seeds is 1.06
+Replay+NCM hybrid trains the backbone with Replay and classifies with prototypes
+built from the replay memory. This is the nearest-mean-of-exemplars rule of iCaRL
+(Rebuffi et al., CVPR 2017) without its distillation loss or herding selection,
+so it is a simplified iCaRL variant rather than a new method. On ImageNet it
+reaches 95.60%, level with the Joint reference at 95.20%: the 0.40-point
+difference is inside both standard deviations, so the two are not separable. It
+is above NCM on every seed (94.40–96.40% against 92.40–93.20%). Its 4.40-point
+mean gain over Replay is not separable: the per-seed ranges overlap (Replay
+86.00–96.00%) and Replay is higher on seed 42. Its spread across seeds is 1.06
 points against Replay's 5.01.
 
-On the Stage 0 backbone the hybrid gains 7.87 points over Replay and cuts
-forgetting from 39.00% to 14.00%. Both parents stay far below: NCM at 25.47% and
-Replay at 45.60%. This indicates that on a weak backbone most of Replay's loss
-came from the softmax head shifting towards newly added classes rather than from
-the representation.
+On the Stage 0 backbone the hybrid gains 7.87 points over Replay, and is higher on
+all three seeds, while forgetting falls from 39.00% to 14.00%. This indicates
+that on a weak backbone most of Replay's forgetting came from the softmax head
+shifting towards newly added classes. It does not recover most of the accuracy
+lost without ImageNet weights: the hybrid reaches 53.47% against 95.60% on the
+ImageNet-21k backbone, so the weak representation remains the main limit.
 
 EWC, LwF and naive fine-tuning all terminate at 20.00% on every seed, so at the
 tested configurations neither parameter regularization nor logit distillation
@@ -48,9 +54,9 @@ improves on plain fine-tuning, and EWC additionally costs 10% more wall time tha
 it does.
 
 NCM remains the cheapest option by a wide margin when a pretrained backbone is
-available and only 2.93 accuracy points are at stake: 42 s and 104 MiB against
-the hybrid's 638 s and 645 MiB, storing one vector per class instead of 200
-images.
+available and only 2.93 accuracy points are at stake: it needs no training step,
+peaks at 104 MiB against the hybrid's 645 MiB, and stores one vector per class
+instead of 200 images.
 
 Measured values per arm are in [`RESULTS.md`](RESULTS.md); the threats to this
 comparison are in
@@ -265,7 +271,7 @@ alone does not include it.
 
 Pre-training is cheap in-domain supervision, not the absence of pre-training: it
 uses 800 images of two classes for 500 optimizer steps, against 21k classes and
-roughly 300M images for ImageNet-21k. That arm reaches 25.47% final accuracy
+roughly 14M images for ImageNet-21k. That arm reaches 25.47% final accuracy
 against 92.67% for the ImageNet-21k backbone, so the published NCM result does
 not follow from the NCM rule alone. It does not show that a ViT cannot be trained
 from scratch either, because the recipe used here is the fine-tuning one. See
@@ -289,7 +295,7 @@ from scratch either, because the recipe used here is the fine-tuning one. See
   ImageNet weights. Rehearsal is the more robust of the two when features are
   weak, but both lose more than half their accuracy without pre-training.
 - The Replay + NCM hybrid is complete: three seeds on each backbone. It reaches
-  95.60% on ImageNet-21k, matching the Joint reference in half the wall time, and
+  95.60% on ImageNet-21k, level with the Joint reference within seed noise, and
   53.47% on the Stage 0 backbone against Replay's 45.60%, with forgetting falling
   from 39.00% to 14.00%.
 - See [`RESULTS.md`](RESULTS.md) for complete mean ± standard deviation tables,

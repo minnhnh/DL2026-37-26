@@ -195,7 +195,7 @@ ImageNet-21k domain-advantage threat recorded in
 
 - **It is not a measurement of pre-training versus no pre-training.** The Stage 0
   arm is cheap in-domain supervision: 800 images, two classes, 500 optimizer
-  steps. ImageNet-21k is 21k classes and roughly 300M images. The comparison
+  steps. ImageNet-21k is 21k classes and roughly 14M images. The comparison
   measures the effect of that scale and domain match, nothing more.
 - **The Stage 0 arm underfits, so it does not show that ViT from scratch fails.**
   Its own Naive run reaches only 57%, 58% and 59% Stage 0 test accuracy, against
@@ -285,7 +285,10 @@ The hybrid trains the backbone with Replay, then rebuilds every prototype from
 the memory buffer using that stage's backbone and predicts by cosine similarity.
 It keeps Replay's representation learning and replaces the softmax head with
 NCM's prototype head. Memory budget and ratio match Replay, so the two differ
-only in the head.
+only in the head. Classifying by the mean feature of the stored exemplars is the
+nearest-mean-of-exemplars rule of iCaRL (Rebuffi et al., CVPR 2017); the hybrid
+is a simplified iCaRL variant without its distillation loss or herding
+selection, not a new method.
 
 | Backbone | Method | Final accuracy (%) | Avg. incremental (%) | Forgetting (%) | BWT (%) | Time (s) | Peak GPU (MiB) |
 |---|---|---:|---:|---:|---:|---:|---:|
@@ -296,6 +299,11 @@ only in the head.
 | Stage 0 | Replay+NCM hybrid | 53.47 ± 4.28 | 57.16 ± 1.70 | 14.00 ± 2.65 | −9.33 ± 3.69 | 724.96 ± 2.95 | 644.67 |
 | Stage 0 | Replay | 45.60 ± 4.33 | 56.33 ± 2.05 | 39.00 ± 5.89 | −36.33 ± 6.79 | 580.20 ± 3.16 | 644.67 |
 | Stage 0 | NCM | 25.47 ± 1.40 | 39.06 ± 2.35 | 21.83 ± 4.80 | −21.83 ± 4.80 | 51.17 ± 0.66 | 103.16 |
+
+Times in this table exclude the 185.4 s Stage 0 pre-training step. The hybrid and
+Stage 0 rows were run in a different GPU session from the published Joint, NCM
+and Replay runs on ImageNet-21k, so times are not directly comparable across those
+two groups.
 
 Average accuracy on seen classes through the stream (%):
 
@@ -316,31 +324,33 @@ Final per-class accuracy (%):
 | ImageNet-21k | 93.33 | 96.00 | 95.33 | 96.67 | 96.67 |
 | Stage 0 | 26.00 | 58.00 | 80.67 | 45.33 | 57.33 |
 
-![Comparison](../../outputs/hybrid_figures/hybrid_backbone_comparison.png)
+![Comparison](outputs/hybrid_figures/hybrid_backbone_comparison.png)
 *Figure. Final accuracy and forgetting for NCM, Replay and the hybrid on both backbones.*
 
 ### What the hybrid establishes
 
-**On the ImageNet-21k backbone it is the strongest method measured here, above
-the Joint reference.** 95.60% against Joint's 95.20%, a 0.40-point difference
-that is well inside both standard deviations, so the two are not separable. It
-is separable from its parents: +2.93 points over NCM and +4.40 over Replay, and
-the per-seed ranges do not overlap. It reaches that in 638 s, about half of
-Joint's 1247 s, and its accuracy spread across seeds is 1.06 points against
-Replay's 5.01.
+**On the ImageNet-21k backbone it is level with the Joint reference.** 95.60%
+against Joint's 95.20%, a 0.40-point difference that is well inside both standard
+deviations, so the two are not separable. It is above NCM on every seed (94.40–96.40%
+against 92.40–93.20%), a 2.93-point mean gain. Its 4.40-point mean gain over Replay
+is not separable: Replay's per-seed range (86.00–96.00%) overlaps the hybrid's,
+and Replay is higher on seed 42 (96.00% against 94.40%). Its accuracy spread
+across seeds is 1.06 points against Replay's 5.01.
 
 **On the Stage 0 backbone it gains 7.87 points over Replay and cuts forgetting
-by 25 points.** 53.47% against 45.60%, with forgetting falling from 39.00% to
-14.00%. Both parents are clearly separated: NCM reaches 25.47% and Replay 45.60%.
-This is the clearest single result of the comparison, and it confirms the
-hypothesis the arm was built to test: on a weak backbone most of Replay's loss
-came from the softmax head shifting towards newly added classes, not from the
-representation itself.
+by 25 points.** 53.47% against 45.60%, higher on all three seeds (54.40, 57.20 and
+48.80% against 50.40, 44.40 and 42.00%), with forgetting falling from 39.00% to
+14.00%. On a weak backbone, most of Replay's forgetting therefore came from the
+softmax head shifting towards newly added classes. Most of the accuracy lost
+without ImageNet weights is not recovered: the hybrid reaches 53.47% against
+95.60% on the ImageNet-21k backbone, so the weak representation remains the main
+limit.
 
-**Joint's claim to be an upper bound does not hold for final accuracy.** The
-hybrid exceeds it while being a valid continual method, because a cumulative
-softmax head remains biased towards recently added classes even when all data is
-available. The prototype head removes that bias.
+**Joint remains a valid reference.** At Stage 3 it trains on all five classes
+with 400 images each, so its head has no old/new class imbalance, and its final
+per-class accuracies show no bias towards the newest class (Building 94–96%,
+in line with the other classes). The hybrid matching it is consistent with seed
+noise; these runs do not show that Joint stops being an upper bound.
 
 ### What it does not establish
 
@@ -350,7 +360,8 @@ available. The prototype head removes that bias.
   a better prototype estimate.
 - **The 0.40-point lead over Joint is not significant.** Three seeds, no
   statistical test. The defensible claim is that the hybrid matches the Joint
-  reference while using half the wall time and remaining a valid continual method.
+  reference while remaining a valid continual method. Its wall time was measured
+  in a different GPU session, so it cannot be compared with Joint's.
 - **Prototype refresh cost is not isolated.** Hybrid per-stage `training_seconds`
   runs about 25% above Replay's, but the two arms were run in different GPU
   sessions, and the refresh itself is 200 forward-only images per stage. The

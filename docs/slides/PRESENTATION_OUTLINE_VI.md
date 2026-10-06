@@ -190,31 +190,34 @@ không?". Câu trả lời: có, nhưng nó vẫn học được điều gì đ�
 
 ---
 
-## Slide 12. Kết hợp Replay + NCM: phương pháp mạnh nhất
+## Slide 12. Kết hợp Replay + NCM (biến thể đơn giản hóa của iCaRL)
 
-- Replay huấn luyện backbone, NCM phân loại bằng prototype. Bộ nhớ và tỉ lệ replay giữ nguyên
-  như Replay, chỉ đổi đầu phân loại
+- Replay huấn luyện backbone, phân loại bằng trung bình đặc trưng của ảnh trong bộ nhớ. Bộ nhớ và
+  tỉ lệ replay giữ nguyên như Replay, chỉ đổi đầu phân loại
+- Đây là quy tắc nearest-mean-of-exemplars của iCaRL [17], bỏ distillation và herding
 
-| Backbone | Phương pháp | Final accuracy (%) | Forgetting (%) | Thời gian (s) |
-|---|---|---:|---:|---:|
-| ImageNet-21k | **Replay+NCM hybrid** | **95,60 ± 1,06** | 2,83 ± 1,89 | 638 |
-| ImageNet-21k | Joint (mốc trên) | 95,20 ± 1,39 | 3,00 ± 1,80 | 1247 |
-| ImageNet-21k | NCM | 92,67 ± 0,46 | 2,67 ± 0,58 | 42 |
-| ImageNet-21k | Replay | 91,20 ± 5,01 | 8,50 ± 5,57 | 763 |
-| Stage 0 | **Replay+NCM hybrid** | **53,47 ± 4,28** | **14,00 ± 2,65** | 725 |
-| Stage 0 | Replay | 45,60 ± 4,33 | 39,00 ± 5,89 | 580 |
-| Stage 0 | NCM | 25,47 ± 1,40 | 21,83 ± 4,80 | 51 |
+| Backbone | Phương pháp | Final accuracy (%) | Forgetting (%) |
+|---|---|---:|---:|
+| ImageNet-21k | **Replay+NCM hybrid** | **95,60 ± 1,06** | 2,83 ± 1,89 |
+| ImageNet-21k | Joint (mốc trên) | 95,20 ± 1,39 | 3,00 ± 1,80 |
+| ImageNet-21k | NCM | 92,67 ± 0,46 | 2,67 ± 0,58 |
+| ImageNet-21k | Replay | 91,20 ± 5,01 | 8,50 ± 5,57 |
+| Stage 0 | **Replay+NCM hybrid** | **53,47 ± 4,28** | **14,00 ± 2,65** |
+| Stage 0 | Replay | 45,60 ± 4,33 | 39,00 ± 5,89 |
+| Stage 0 | NCM | 25,47 ± 1,40 | 21,83 ± 4,80 |
 
 - Hình: `hybrid_backbone_comparison.png`
-- **Kết quả chính**: trên backbone yếu, hybrid hơn Replay 7,87 điểm và giảm forgetting từ
-  39,00% xuống 14,00% → phần lớn mất mát của Replay đến từ **đầu softmax**, không phải từ biểu diễn
-- Trên ImageNet, hybrid đạt 95,60%, **ngang bằng mốc trên Joint** (chênh 0,40 điểm nằm trong độ
-  lệch chuẩn) nhưng chỉ tốn khoảng một nửa thời gian và vẫn là phương pháp continual hợp lệ
+- **Kết quả chính**: trên backbone yếu, hybrid hơn Replay 7,87 điểm (cao hơn ở cả 3 seed) và giảm
+  forgetting từ 39,00% xuống 14,00% → phần lớn **forgetting** của Replay đến từ **đầu softmax**.
+  Nhưng accuracy vẫn rất xa mức có ImageNet, nên biểu diễn yếu vẫn là giới hạn chính
+- Trên ImageNet, hybrid **ngang bằng mốc trên Joint** (chênh 0,40 điểm nằm trong độ lệch chuẩn),
+  cao hơn NCM ở mọi seed, ổn định hơn Replay (độ lệch chuẩn 1,06 so với 5,01); mức hơn Replay
+  4,40 điểm **không** phân biệt được (seed 42 Replay cao hơn)
 - Prototype chỉ dựng từ 40–100 ảnh bộ nhớ (NCM dùng đủ 400/class), nên lợi thế nằm ở sự kết hợp
   chứ không ở prototype chính xác hơn
 
-**Ghi chú:** Đây là đóng góp phương pháp duy nhất của đồ án. Nhấn mạnh Joint không còn là mốc
-trên chặt về final accuracy: đầu softmax tích lũy vẫn thiên lệch về class mới thêm.
+**Ghi chú:** Nói rõ đây là biến thể của iCaRL, không phải phương pháp mới. Không so thời gian của
+hybrid với Joint: các run hybrid chạy ở phiên GPU khác với 18 run đã công bố.
 
 ---
 
@@ -249,8 +252,8 @@ trên chặt về final accuracy: đầu softmax tích lũy vẫn thiên lệch 
   pretrain**
 - Cả Replay lẫn NCM đều mất phần lớn accuracy khi bỏ trọng số pretrained (91,20→45,60 và
   92,67→25,47), nhưng Replay vẫn học được khi backbone yếu, NCM thì không
-- Kết hợp Replay + NCM là phương pháp mạnh nhất: ngang bằng mốc trên Joint với một nửa thời gian,
-  và hơn Replay 7,87 điểm trên backbone yếu
+- Kết hợp Replay + NCM (biến thể iCaRL): ngang bằng mốc trên Joint trên backbone ImageNet-21k, và
+  hơn Replay 7,87 điểm, giảm forgetting từ 39% xuống 14% trên backbone yếu
 - Hướng tiếp: tinh chỉnh `λ`, `α`; thêm hiệu chỉnh bias (BiC, WA); herding cho Replay; miền dữ
   liệu xa ImageNet; chạy tất định và nhiều seed hơn
 
@@ -308,3 +311,13 @@ trọng số pretrained sẵn trong timm.]
 Quét siêu tham số EWC/LwF trên validation, bật chế độ tất định và dùng chung checkpoint Stage 0,
 rồi thử giao thức nhiều class mỗi stage để kiểm tra thất bại của EWC/LwF có phụ thuộc giao thức
 hay không.
+
+**11. Hybrid Replay + NCM có phải phương pháp mới của nhóm không?**
+Không. Phân loại bằng trung bình đặc trưng của ảnh trong bộ nhớ là quy tắc nearest-mean-of-
+exemplars của iCaRL [17]. Hybrid là iCaRL bỏ distillation và herding. Nhóm dùng nó để tách riêng
+ảnh hưởng của đầu phân loại: train giống hệt Replay, chỉ đổi cách dự đoán.
+
+**12. Hybrid vượt Joint, vậy Joint còn là mốc trên không?**
+Chênh 0,40 điểm nằm trong nhiễu giữa các seed, nên chỉ nói được là ngang nhau. Joint ở Stage 3 học
+dữ liệu cân bằng 5 class và không bị lệch về class mới (Building 94–96%, ngang các class khác), nên
+vẫn là mốc tham chiếu hợp lệ.

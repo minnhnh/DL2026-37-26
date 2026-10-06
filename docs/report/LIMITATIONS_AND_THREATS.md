@@ -176,17 +176,23 @@ fine-tune (AdamW 1e-4, 500 bước ở Stage 0, không warmup/scheduler), và ac
 này chỉ 56,67% so với 96,67% khi có trọng số pretrained.
 
 **Hybrid Replay + NCM.** Phương pháp kết hợp ở mục 4.7 đạt 95,60% trên backbone ImageNet-21k
-và 53,47% trên backbone Stage 0. Kết quả này **củng cố** kết luận trên ở một hướng khác: nó cho
-thấy phần lớn mất mát của Replay đến từ đầu softmax chứ không từ biểu diễn, vì thay đầu phân loại
-bằng prototype đã giảm forgetting trên backbone yếu từ 39,00% xuống 14,00%.
+và 53,47% trên backbone Stage 0. Kết quả này **củng cố** kết luận trên ở một hướng khác: thay
+đầu phân loại bằng prototype giảm forgetting trên backbone yếu từ 39,00% xuống 14,00%, nên phần
+lớn forgetting của Replay đến từ đầu softmax. Nhưng accuracy chỉ tăng từ 45,60% lên 53,47%, vẫn
+rất xa 95,60% khi có trọng số ImageNet-21k, nên phần lớn accuracy bị mất vẫn là do biểu diễn yếu.
+Hybrid là biến thể đơn giản hóa của iCaRL [17] (bỏ distillation và herding), không phải phương
+pháp mới.
 
 Ba giới hạn riêng của phép đo này. Thứ nhất, prototype của hybrid chỉ dựng từ 40–100 ảnh bộ nhớ
 trong khi arm NCM dùng đủ 400 ảnh/class, nên lợi thế nằm ở sự kết hợp chứ không ở prototype chính
 xác hơn. Thứ hai, chênh 0,40 điểm so với mốc trên Joint nằm trong cả hai độ lệch chuẩn, nên không
-được nói hybrid vượt Joint về mặt thống kê; chỉ được nói nó ngang bằng Joint trong khoảng một nửa
-thời gian. Thứ ba, chi phí dựng lại prototype không tách được khỏi chênh lệch giữa các session
-GPU: `training_seconds` mỗi stage cao hơn Replay khoảng 25%, nhưng bước dựng lại chỉ là 200 ảnh
-forward mỗi stage, nên không thể quy chênh lệch đó cho nó. Ba seed, không kiểm định thống kê.
+được nói hybrid vượt Joint về mặt thống kê; chỉ được nói nó ngang bằng Joint. Mức hơn Replay
+trên ImageNet-21k (4,40 điểm) cũng không phân biệt được, vì khoảng theo seed chồng lấn và ở seed
+42 Replay còn cao hơn. Thứ ba, các run hybrid và các arm backbone mới chạy ở phiên GPU khác với
+18 run đã công bố, nên không so thời gian giữa hai nhóm được; chi phí dựng lại prototype cũng
+không tách được: `training_seconds` mỗi stage cao hơn Replay khoảng 25%, nhưng bước dựng lại chỉ
+là 200 ảnh forward mỗi stage, nên không thể quy chênh lệch đó cho nó. Ba seed, không kiểm định
+thống kê.
 
 **Phần mối đe dọa vẫn còn lại.** Mức ảnh hưởng không thể hạ về Thấp. Hai phép đo trên chỉ chứng
 minh rằng lợi thế lớn nằm ở trọng số ImageNet-21k; chúng **không** cho biết kết quả ấy có còn giữ
@@ -194,7 +200,7 @@ minh rằng lợi thế lớn nằm ở trọng số ImageNet-21k; chúng **khô
 chưa được thử.
 
 **Giới hạn của phép đo.** Arm Stage 0 là giám sát rẻ trong miền (800 ảnh, 2 class, 500 bước tối
-ưu), không phải "không pretrain"; nó so 800 ảnh với 21k class và khoảng 300 triệu ảnh, nên đo ảnh
+ưu), không phải "không pretrain"; nó so 800 ảnh với 21k class và khoảng 14 triệu ảnh, nên đo ảnh
 hưởng của quy mô và độ khớp miền. Arm này **underfit rõ rệt**: chính run Naive của nó chỉ đạt
 57%, 58% và 59% accuracy ở Stage 0, so với 91% của NCM pretrained. Với 800 ảnh, 500 bước,
 AdamW 1e-4, không warmup và không scheduler, đây là công thức fine-tune áp cho random init, chứ
@@ -251,7 +257,8 @@ pretrained lớn đã được huấn luyện trước đó bằng chi phí rấ
 | Thất bại của LwF đi kèm việc đoán sai sang class mới | Joint là phương pháp continual learning |
 | Kết quả NCM phụ thuộc nặng vào trọng số ImageNet-21k, đã đo trực tiếp ở mục 4.1 | NCM vẫn mạnh khi miền xa ImageNet |
 | Rehearsal bền hơn prototype đóng băng khi đặc trưng yếu (45,60% so với 25,47%) | Replay không phụ thuộc trọng số pretrained |
-| Kết hợp Replay với đầu prototype tốt hơn cả hai phương pháp gốc trên cả hai backbone | Hybrid vượt mốc trên Joint về mặt thống kê |
-| Hybrid ngang bằng Joint với khoảng một nửa thời gian, và vẫn là phương pháp continual hợp lệ | Hybrid là phương pháp continual tốt nhất có thể |
+| Hybrid cao hơn NCM ở mọi seed, và cao hơn Replay ở mọi seed trên backbone yếu | Hybrid vượt mốc trên Joint về mặt thống kê |
+| Hybrid ngang bằng Joint trong phạm vi nhiễu, và vẫn là phương pháp continual hợp lệ | Hybrid tốt hơn Replay trên backbone ImageNet-21k |
+| Trên backbone yếu, đổi sang đầu prototype giảm phần lớn forgetting của Replay | Hybrid là phương pháp mới, hoặc nhanh hơn Joint |
 | | ViT không thể huấn luyện từ đầu (arm Stage 0 chỉ underfit với bộ siêu tham số hiện có) |
 | | Arm Stage 0 và arm chưa huấn luyện khác nhau có ý nghĩa thống kê |

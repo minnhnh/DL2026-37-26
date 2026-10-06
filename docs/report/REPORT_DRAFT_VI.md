@@ -73,11 +73,13 @@ toàn bộ dữ liệu thì tốn kém, và nhiều khi không làm được vì
   cùng mã đánh giá và cùng seed.
 - Một phép đo tiếp theo trên cùng checkpoint Stage 0, so Replay với NCM (mục 4.6), cho phép
   so sánh rehearsal với biểu diễn đóng băng khi đặc trưng yếu.
-- Một phương pháp kết hợp do đồ án cài đặt, Replay + NCM hybrid (mục 3.8), đạt kết quả tốt nhất
-  trong cả hai cấu hình backbone (mục 4.7) và vượt mốc trên Joint về final accuracy.
+- Cài đặt và đánh giá một biến thể đơn giản hóa của iCaRL [17], gọi là Replay + NCM hybrid
+  (mục 3.8): giữ cách huấn luyện của Replay, nhưng phân loại bằng trung bình đặc trưng của ảnh
+  trong bộ nhớ. Trên backbone ImageNet-21k, hybrid ngang mốc trên Joint trong phạm vi nhiễu
+  giữa các seed; trên backbone yếu, nó giảm mạnh forgetting so với Replay (mục 4.7).
 
-Đồ án **không** đề xuất phương pháp mới. Việc NCM trên đặc trưng pretrained là baseline mạnh
-đã được ghi nhận trong tài liệu [21, 22].
+Đồ án **không** đề xuất phương pháp mới. Hybrid là biến thể của iCaRL [17], còn việc NCM trên
+đặc trưng pretrained là baseline mạnh đã được ghi nhận trong tài liệu [21, 22].
 
 ---
 
@@ -241,8 +243,11 @@ Kết quả được báo dưới dạng trung bình ± độ lệch chuẩn m�
 
 ### 3.8. Replay + NCM hybrid
 
-Đây là phương pháp duy nhất do đồ án cài đặt, ghép phần học biểu diễn của Replay với đầu phân
-loại của NCM. Mỗi stage *k*:
+Phương pháp này ghép phần học biểu diễn của Replay với đầu phân loại của NCM. Cách phân loại
+bằng trung bình đặc trưng của ảnh trong bộ nhớ chính là quy tắc nearest-mean-of-exemplars của
+iCaRL [17]; hybrid khác iCaRL ở chỗ không dùng loss distillation và chọn ảnh vào bộ nhớ ngẫu
+nhiên thay vì bằng herding. Vì vậy đây là một biến thể đơn giản hóa của iCaRL, không phải
+phương pháp mới. Mỗi stage *k*:
 
 1. Replay fine-tune backbone trên dữ liệu stage *k* và bộ nhớ 200 ảnh. Head 5 output và
    cross-entropy được giữ nguyên trong bước này vì đó là tín hiệu gradient để backbone học.
@@ -447,6 +452,10 @@ phân loại.
 | Stage 0 | Replay | 45,60 ± 4,33 | 39,00 ± 5,89 | 580,2 | 644,7 |
 | Stage 0 | NCM | 25,47 ± 1,40 | 21,83 ± 4,80 | 51,2 | 103,2 |
 
+Thời gian trong bảng chưa gồm bước huấn luyện trước ở Stage 0 (185,4 s). Các hàng hybrid và
+các hàng backbone Stage 0 được chạy ở một phiên GPU khác với các run đã công bố của Joint, NCM
+và Replay trên ImageNet-21k, nên không so sánh trực tiếp thời gian giữa hai nhóm này được.
+
 Accuracy trên các class đã thấy qua từng stage (%):
 
 | Stage | Số class đã thấy | Hybrid ImageNet | Hybrid Stage 0 | Replay ImageNet | NCM ImageNet |
@@ -462,26 +471,31 @@ Theo seed, final accuracy của arm ImageNet là 94,40; 96,40; 96,00; của arm 
 ![So sánh hybrid](../../outputs/hybrid_figures/hybrid_backbone_comparison.png)
 *Hình 11. Final accuracy và forgetting của NCM, Replay và hybrid trên hai nguồn backbone.*
 
-**Trên backbone ImageNet-21k, đây là phương pháp mạnh nhất được đo, kể cả so với mốc trên
-Joint.** 95,60% so với 95,20%, chênh 0,40 điểm nằm trong cả hai độ lệch chuẩn nên hai mốc không
-phân biệt được. Nhưng nó phân biệt được với hai phương pháp gốc: +2,93 điểm so với NCM và +4,40
-so với Replay, với khoảng theo seed không chồng lấn. Nó đạt mức đó trong 637,6 s, khoảng một nửa
-thời gian của Joint, và độ lệch chuẩn chỉ 1,06 điểm so với 5,01 của Replay.
+**Trên backbone ImageNet-21k, hybrid ngang mốc trên Joint.** 95,60% so với 95,20%, chênh 0,40
+điểm nằm trong cả hai độ lệch chuẩn nên hai phương pháp không phân biệt được. Hybrid cao hơn NCM
+ở mọi seed (94,40–96,40% so với 92,40–93,20%), trung bình hơn 2,93 điểm. So với Replay, mức hơn
+trung bình 4,40 điểm **không** phân biệt được: khoảng theo seed của Replay (86,00–96,00%) chồng
+lấn với hybrid, và ở seed 42 Replay còn cao hơn (96,00% so với 94,40%). Điểm khác rõ là độ ổn
+định: độ lệch chuẩn của hybrid chỉ 1,06 điểm so với 5,01 của Replay.
 
-**Trên backbone Stage 0, nó hơn Replay 7,87 điểm và giảm forgetting 25 điểm.** 53,47% so với
-45,60%, forgetting từ 39,00% xuống 14,00%. Đây là kết quả rõ nhất của phép so sánh và xác nhận
-giả thuyết mà arm được dựng để kiểm chứng: khi đặc trưng yếu, phần lớn mất mát của Replay đến từ
-đầu softmax bị dịch về class mới thêm, không phải từ bản thân biểu diễn.
+**Trên backbone Stage 0, hybrid hơn Replay 7,87 điểm và giảm forgetting 25 điểm.** 53,47% so với
+45,60%, cao hơn ở cả ba seed (54,40; 57,20; 48,80% so với 50,40; 44,40; 42,00%), và forgetting
+giảm từ 39,00% xuống 14,00%. Như vậy khi đặc trưng yếu, phần lớn **forgetting** của Replay đến
+từ đầu softmax bị lệch về class mới. Tuy nhiên phần lớn **accuracy** bị mất khi bỏ trọng số
+ImageNet vẫn không lấy lại được: hybrid chỉ đạt 53,47% so với 95,60% trên backbone ImageNet-21k,
+nên biểu diễn yếu vẫn là giới hạn chính.
 
-**Tuyên bố "mốc trên" của Joint không đúng với final accuracy.** Hybrid vượt nó trong khi vẫn là
-một phương pháp continual hợp lệ, vì đầu softmax tích lũy vẫn thiên lệch về class mới thêm ngay
-cả khi có đủ dữ liệu. Đầu prototype loại bỏ thiên lệch đó.
+**Joint vẫn là mốc tham chiếu hợp lệ.** Ở Stage 3, Joint học đủ 5 class, mỗi class 400 ảnh, nên
+đầu phân loại không bị mất cân bằng giữa class cũ và mới. Accuracy cuối theo class của Joint cũng
+không lệch về class mới nhất (Building 94–96%, ngang các class khác). Việc hybrid ngang Joint
+phù hợp với nhiễu giữa các seed, và không đủ để kết luận Joint không còn là mốc trên.
 
 **Giới hạn của kết quả này.** Prototype của hybrid chỉ dựng từ 40–100 ảnh bộ nhớ, trong khi arm
-NCM dùng đủ 400 ảnh/class — nên lợi thế của hybrid nằm ở sự kết hợp, không phải ở prototype
-chính xác hơn. Chênh 0,40 điểm so với Joint không có ý nghĩa thống kê với 3 seed. Và chi phí
-dựng lại prototype không tách được khỏi chênh lệch giữa các session GPU: `training_seconds` mỗi
-stage của hybrid cao hơn Replay khoảng 25%, nhưng bước dựng lại chỉ là 200 ảnh forward mỗi stage.
+NCM dùng đủ 400 ảnh/class, nên lợi thế của hybrid nằm ở sự kết hợp, không phải ở prototype
+chính xác hơn. Chênh 0,40 điểm so với Joint không có ý nghĩa thống kê với 3 seed. Thời gian của
+hybrid được đo ở phiên GPU khác nên không so được với Joint, và chi phí dựng lại prototype cũng
+không tách được: `training_seconds` mỗi stage của hybrid cao hơn Replay khoảng 25%, nhưng bước
+dựng lại chỉ là 200 ảnh forward mỗi stage.
 
 ---
 
