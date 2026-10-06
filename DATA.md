@@ -18,10 +18,12 @@ official attribution requirements when publishing example images.
 The processed crops used in every reported experiment (2,500 JPEG files,
 about 377 MB) are available at:
 
-- Download: <ADD-LINK-HERE>
+- Download: <https://drive.google.com/file/d/1MEBVCbjy7x3ySbqFA9-fqIKRAuTG8OAl/view?usp=sharing>
+  (`DL2026-37-26_open_images_v7_crops.zip`, 372 MiB)
 
-Extract the archive at the repository root so that the files appear under
-`data/processed_clean/`. The committed manifests in `data/manifests/` already
+The archive contains the 2,500 crops, the three split manifests, and a short
+`README.txt` with source and license notes. Extract it at the repository root
+so that the files appear under `data/processed_clean/`. The committed manifests in `data/manifests/` already
 point to these paths, so no further step is needed before training.
 
 ## Data split
